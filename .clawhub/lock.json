@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "self-improving-agent": {
+      "version": "3.0.13",
+      "installedAt": 1775469510043
+    },
+    "skill-vetter": {
+      "version": "1.0.0",
+      "installedAt": 1775470581571
+    },
+    "self-improving": {
+      "version": "1.2.16",
+      "installedAt": 1775470686401
+    },
+    "agent-team-orchestration": {
+      "version": "1.0.0",
+      "installedAt": 1775473433998
+    }
+  }
+}

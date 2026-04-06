@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pete's File Drop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 0;
+      border-bottom: 1px solid #222;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    header p {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .drop-zone {
+      border: 2px dashed #333;
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      background: #111;
+      margin-bottom: 2rem;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #6cb4ff;
+      background: #111827;
+    }
+    .drop-zone .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .drop-zone h3 {
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .drop-zone p {
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .drop-zone input[type="file"] {
+      display: none;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .section h2 {
+      font-size: 1.1rem;
+      color: #fff;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #222;
+    }
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .folder-card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem;
+      transition: all 0.2s;
+    }
+    .folder-card:hover {
+      border-color: #6cb4ff;
+    }
+    .folder-card h3 {
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .folder-card .path {
+      font-size: 0.75rem;
+      color: #666;
+      font-family: monospace;
+      margin-bottom: 0.75rem;
+      word-break: break-all;
+    }
+    .folder-card .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #6cb4ff;
+      color: #000;
+    }
+    .btn-primary:hover {
+      background: #93c9ff;
+    }
+    .btn-secondary {
+      background: #222;
+      color: #e0e0e0;
+    }
+    .btn-secondary:hover {
+      background: #333;
+    }
+    .upload-status {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .upload-status.success {
+      display: block;
+      background: #0f2a1d;
+      color: #4ade80;
+      border: 1px solid #166534;
+    }
+    .upload-status.error {
+      display: block;
+      background: #2a0f0f;
+      color: #f87171;
+      border: 1px solid #991b1b;
+    }
+    .file-list {
+      list-style: none;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .file-item:last-child {
+      border-bottom: none;
+    }
+    .file-item .icon {
+      font-size: 1.2rem;
+    }
+    .file-item .name {
+      flex: 1;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+    }
+    .file-item .size {
+      color: #555;
+      font-size: 0.75rem;
+    }
+    .file-item .actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .file-item .actions button {
+      background: none;
+      border: none;
+      color: #6cb4ff;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.4rem;
+    }
+    .file-item .actions button:hover {
+      color: #93c9ff;
+    }
+    .empty {
+      color: #444;
+      font-style: italic;
+      padding: 1rem 0;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📁 Pete's File Drop</h1>
+      <p>Upload files, browse folders, grab URLs</p>
+    </header>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📤</div>
+      <h3>Drop files here or click to upload</h3>
+      <p>Supports any file type • Max 50MB per file</p>
+      <input type="file" id="fileInput" multiple>
+    </div>
+
+    <div class="upload-status" id="uploadStatus"></div>
+
+    <div class="section">
+      <h2>📚 Ebook Team</h2>
+      <div class="folder-grid">
+        <div class="folder-card">
+          <h3>🖼️ Covers</h3>
+          <div class="path">/ebook-team/covers/</div>
+          <div class="actions">
+            <a href="/covers/" class="btn btn-primary">Browse</a>
+            <a href="/covers/" class="btn btn-secondary">URL</a>
+          </div>
+        </div>
+        <div class="folder-card">
+          <h3>📋 KDP Listings</h3>
+          <div class="path">/ebook-team/kdp-listings/</div>
+          <div class="actions">
+            <a href="/kdp-listings/" class="btn btn-primary">Browse</a>
+            <a href="/kdp-listings/" class="btn btn-secondary">URL</a>
+          </div>
+        </div>
+        <div class="folder-card">
+          <h3>📝 Templates</h3>
+          <div class="path">/ebook-team/templates/</div>
+          <div class="actions">
+            <a href="/templates/" class="btn btn-primary">Browse</a>
+            <a href="/templates/" class="btn btn-secondary">URL</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📁 Recent Files</h2>
+      <div id="recentFiles">
+        <p class="empty">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const recentFiles = document.getElementById('recentFiles');
+
+    // Click to upload
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      if (files.length === 0) return;
+
+      Array.from(files).forEach(file => {
+        uploadFile(file);
+      });
+    }
+
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showStatus(`✅ Uploaded: ${file.name}`, 'success');
+          loadRecentFiles();
+        } else {
+          showStatus(`❌ Failed: ${result.error || 'Unknown error'}`, 'error');
+        }
+      } catch (err) {
+        showStatus(`❌ Upload failed: ${err.message}`, 'error');
+      }
+    }
+
+    function showStatus(message, type) {
+      uploadStatus.textContent = message;
+      uploadStatus.className = `upload-status ${type}`;
+      setTimeout(() => {
+        uploadStatus.className = 'upload-status';
+      }, 5000);
+    }
+
+    async function loadRecentFiles() {
+      try {
+        const response = await fetch('/api/files');
+        const data = await response.json();
+
+        if (data.files && data.files.length > 0) {
+          const html = `<ul class="file-list">${data.files.map(f => `
+            <li class="file-item">
+              <span class="icon">${getFileIcon(f.name)}</span>
+              <span class="name">${f.name}</span>
+              <span class="size">${formatSize(f.size)}</span>
+              <div class="actions">
+                <button onclick="copyUrl('${f.url}')">📋 Copy URL</button>
+                <a href="${f.url}" target="_blank">🔗 Open</a>
+              </div>
+            </li>
+          `).join('')}</ul>`;
+          recentFiles.innerHTML = html;
+        } else {
+          recentFiles.innerHTML = '<p class="empty">No files yet. Upload something!</p>';
+        }
+      } catch (err) {
+        recentFiles.innerHTML = '<p class="empty">Could not load files</p>';
+      }
+    }
+
+    function copyUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showStatus('📋 URL copied to clipboard', 'success');
+      });
+    }
+
+    function getFileIcon(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      const icons = {
+        'md': '📝', 'txt': '📄', 'json': '📋',
+        'docx': '📘', 'pdf': '📕', 'html': '🌐',
+        'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️',
+        'gif': '🖼️', 'svg': '🖼️', 'webp': '🖼️',
+        'js': '⚡', 'css': '🎨'
+      };
+      return icons[ext] || '📄';
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // Load files on page load
+    loadRecentFiles();
+  </script>
+</body>
+</html>
